@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Shield, AlertTriangle, CheckCircle, AlertCircle, Search, Filter, BarChart3 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { mockRiskScores } from '@/lib/mock-data/risk-scores'
-import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useToast } from '@/components/ui/toast'
 
@@ -98,17 +97,14 @@ export default function RiskAnalysisPage() {
 
   if (loading || authLoading) {
     return (
-      <DashboardShell title="Risk Analysis" userRole="risk_analyst" userName={user?.name || undefined}>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-        </div>
-      </DashboardShell>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      </div>
     )
   }
 
   return (
-    <DashboardShell title="Risk Analysis" userRole="risk_analyst" userName={user?.name || undefined}>
-      <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <div>
           <h1 className="font-sans text-4xl font-bold text-neutral-900">Risk Analysis</h1>
@@ -321,7 +317,6 @@ export default function RiskAnalysisPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardShell>
   )
 }
 

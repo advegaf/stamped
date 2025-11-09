@@ -168,11 +168,11 @@ export default function DocumentReviewCard({
         </div>
 
         {/* Review Notes (if already reviewed) */}
-        {isReviewed && document.reviewNotes && (
-          <Alert variant={document.status === 'APPROVED' ? 'success' : 'error'}>
+        {isReviewed && document.comments && document.comments.length > 0 && (
+          <Alert variant={document.status === 'approved' ? 'success' : 'error'}>
             <AlertDescription className="text-sm">
               <span className="font-semibold">Review Notes: </span>
-              {document.reviewNotes}
+              {document.comments.join(', ')}
             </AlertDescription>
           </Alert>
         )}

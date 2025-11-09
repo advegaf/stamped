@@ -30,7 +30,6 @@ import {
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { BackButton } from '@/components/layout/back-button'
-import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useToast } from '@/components/ui/toast'
 import { getUserFriendlyErrorMessage } from '@/lib/utils/error-handling'
@@ -69,17 +68,15 @@ export default function RiskAnalysisDetailPage() {
 
   if (!riskData) {
     return (
-      <DashboardShell title="Risk Analysis" userRole="risk_analyst" userName={user?.name || undefined}>
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <Shield className="h-16 w-16 text-neutral-300 mb-4" />
-          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Entity Not Found</h2>
-          <p className="text-neutral-600 mb-4">The requested risk analysis could not be found.</p>
-          <Button onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back
-          </Button>
-        </div>
-      </DashboardShell>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Shield className="h-16 w-16 text-neutral-300 mb-4" />
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Entity Not Found</h2>
+        <p className="text-neutral-600 mb-4">The requested risk analysis could not be found.</p>
+        <Button onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go Back
+        </Button>
+      </div>
     )
   }
 
@@ -225,10 +222,9 @@ export default function RiskAnalysisDetailPage() {
   }
 
   return (
-    <DashboardShell title="Risk Analysis" userRole="risk_analyst" userName={user?.name || undefined}>
-      <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Back Button */}
-        <BackButton href="/compliance/risk-assessment" label="Back to Risk Assessment" />
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Back Button */}
+      <BackButton href="/risk-analyst/analysis" label="Back to Risk Analysis" />
 
       {/* Entity Header */}
       <div className="flex items-start justify-between">
@@ -679,8 +675,7 @@ export default function RiskAnalysisDetailPage() {
           </div>
         </div>
       </Modal>
-      </div>
-    </DashboardShell>
+    </div>
   )
 }
 

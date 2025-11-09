@@ -2,11 +2,10 @@
 
 import * as React from 'react'
 import { UnifiedNav } from './unified-nav'
-import type { EmployeeRole } from './unified-nav'
+import type { EmployeeRole, UserType } from './unified-nav'
 import { cn } from '@/lib/utils'
 import { AtmosphericBackground } from '@/components/landing/atmospheric-background'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { ToastProvider } from '@/components/ui/toast'
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -15,6 +14,7 @@ interface DashboardShellProps {
   userRole?: 'compliance' | 'relationship' | 'procurement' | 'compliance_officer' | 'relationship_manager' | 'risk_analyst' | 'executive'
   userName?: string
   className?: string
+  userType?: UserType // Allow overriding user type for settings page
 }
 
 export function DashboardShell({
@@ -24,6 +24,7 @@ export function DashboardShell({
   userRole,
   userName,
   className,
+  userType,
 }: DashboardShellProps) {
   const { user } = useAuth()
   
@@ -41,26 +42,27 @@ export function DashboardShell({
   const effectiveRole = userRole || user?.role || 'relationship_manager'
   const mappedRole = mapRole(effectiveRole)
 
+  // Determine user type: prefer prop, fallback to user's type from auth, default to employee
+  const effectiveUserType: UserType = userType || (user?.userType === 'client' ? 'client' : user?.userType === 'vendor' ? 'vendor' : 'employee')
+
   // Use provided userName, or get from auth, ensuring it's always a valid string
   // UnifiedNav will handle fallback to 'User' if needed, but we ensure we pass a string or undefined
   const displayUserName = userName || (user?.name && typeof user.name === 'string' && user.name.trim().length > 0 ? user.name.trim() : undefined)
 
   return (
-    <ToastProvider>
-      <AtmosphericBackground variant="light">
-        <div className="flex min-h-screen flex-col">
-          <UnifiedNav 
-            userType="employee" 
-            userRole={mappedRole} 
-            userName={displayUserName}
-          />
-          
-          <main className={cn('flex-1 p-8 md:p-10 lg:p-12', className)}>
-            {children}
-          </main>
-        </div>
-      </AtmosphericBackground>
-    </ToastProvider>
+    <AtmosphericBackground variant="light">
+      <div className="flex min-h-screen flex-col">
+        <UnifiedNav 
+          userType={effectiveUserType} 
+          userRole={effectiveUserType === 'employee' ? mappedRole : undefined} 
+          userName={displayUserName}
+        />
+        
+        <main className={cn('flex-1 p-8 md:p-10 lg:p-12', className)}>
+          {children}
+        </main>
+      </div>
+    </AtmosphericBackground>
   )
 }
 

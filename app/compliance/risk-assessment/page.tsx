@@ -10,7 +10,6 @@ import { Loader2, Shield, AlertTriangle, CheckCircle, AlertCircle, Search, Filte
 import { motion } from 'framer-motion'
 import { mockRiskScores } from '@/lib/mock-data/risk-scores'
 import { BackButton } from '@/components/layout/back-button'
-import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 type EntityTypeFilter = 'all' | 'client' | 'vendor'
@@ -91,17 +90,14 @@ export default function RiskAssessmentPage() {
 
   if (loading) {
     return (
-      <DashboardShell title="Risk Assessment" userRole="compliance_officer" userName={user?.name || undefined}>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-        </div>
-      </DashboardShell>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      </div>
     )
   }
 
   return (
-    <DashboardShell title="Risk Assessment" userRole="compliance_officer" userName={user?.name || undefined}>
-      <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
         <BackButton href="/compliance" label="Back to Compliance" />
       
       {/* Header */}
@@ -315,8 +311,7 @@ export default function RiskAssessmentPage() {
           </Card>
         )}
       </div>
-      </div>
-    </DashboardShell>
+    </div>
   )
 }
 

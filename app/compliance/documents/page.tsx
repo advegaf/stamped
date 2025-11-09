@@ -15,7 +15,6 @@ import { motion } from 'framer-motion'
 import { BackButton } from '@/components/layout/back-button'
 import { useToast } from '@/components/ui/toast'
 import { getUserFriendlyErrorMessage } from '@/lib/utils/error-handling'
-import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 type DocumentFilterStatus = DocumentStatus | 'ALL'
@@ -152,16 +151,14 @@ export default function ComplianceDocumentsPage() {
 
   if (loading) {
     return (
-      <DashboardShell title="Document Reviews" userRole="compliance_officer" userName={user?.name || undefined}>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-        </div>
-      </DashboardShell>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      </div>
     )
   }
 
   return (
-    <DashboardShell title="Document Reviews" userRole="compliance_officer" userName={user?.name || undefined}>
+    <>
       {/* Document Annotator Modal */}
       {viewingDocument && (
         <DocumentAnnotator
@@ -348,7 +345,7 @@ export default function ComplianceDocumentsPage() {
         )}
       </div>
       </div>
-    </DashboardShell>
+    </>
   )
 }
 
