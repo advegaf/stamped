@@ -1,12 +1,14 @@
 import * as React from 'react'
-import { Navigation } from './navigation'
+import { UnifiedNav } from './unified-nav'
+import type { EmployeeRole } from './unified-nav'
 import { cn } from '@/lib/utils'
+import { AtmosphericBackground } from '@/components/landing/atmospheric-background'
 
 interface DashboardShellProps {
   children: React.ReactNode
   title?: string
   notificationCount?: number
-  userRole?: 'compliance' | 'relationship' | 'procurement'
+  userRole?: 'compliance' | 'relationship' | 'procurement' | 'compliance_officer' | 'relationship_manager' | 'risk_analyst' | 'executive'
   userName?: string
   className?: string
 }
@@ -19,16 +21,29 @@ export function DashboardShell({
   userName,
   className,
 }: DashboardShellProps) {
+  // Map old role format to new format
+  const mapRole = (role?: string): EmployeeRole => {
+    if (role === 'compliance' || role === 'compliance_officer') return 'compliance_officer'
+    if (role === 'relationship' || role === 'relationship_manager') return 'relationship_manager'
+    if (role === 'risk_analyst') return 'risk_analyst'
+    if (role === 'executive') return 'executive'
+    return 'relationship_manager' // default
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100/50">
-      <Navigation userRole={userRole} userName={userName} />
-      
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <main className={cn('flex-1 overflow-y-auto p-8 md:p-10 lg:p-12', className)}>
+    <AtmosphericBackground variant="light">
+      <div className="flex min-h-screen flex-col">
+        <UnifiedNav 
+          userType="employee" 
+          userRole={mapRole(userRole)} 
+          userName={userName}
+        />
+        
+        <main className={cn('flex-1 p-8 md:p-10 lg:p-12', className)}>
           {children}
         </main>
       </div>
-    </div>
+    </AtmosphericBackground>
   )
 }
 

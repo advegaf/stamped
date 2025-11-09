@@ -3,17 +3,24 @@ import { Client, LifecycleStage, ClientStatus } from '@/lib/types/client'
 import { Document, DocumentStatus } from '@/lib/types/document'
 import { Message } from '@/lib/types/message'
 import { Conversation } from '@/lib/types/conversation'
-import { mock
-
-Leads } from '@/lib/mock-data/leads'
+import { mockLeads } from '@/lib/mock-data/leads'
 import { mockDocuments } from '@/lib/mock-data/documents'
 import { mockMessages, mockConversations } from '@/lib/mock-data/messages'
+import { realtimeService } from './realtime-service'
+import { assignmentService } from './assignment-service'
+import { notificationService } from './notification-service'
 
 // Simulate API delay
 const API_DELAY = 500 // ms
 
 function delay(ms: number = API_DELAY): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Local storage keys
+const STORAGE_KEYS = {
+  LEADS: 'stamped_leads',
+  CLIENTS: 'stamped_clients',
 }
 
 // Mock data service - simulates backend API calls
@@ -24,6 +31,17 @@ export class MockDataService {
   
   async getLeads(): Promise<Lead[]> {
     await delay()
+    // Try to get from localStorage first
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEYS.LEADS)
+      if (stored) {
+        try {
+          return JSON.parse(stored)
+        } catch (e) {
+          console.error('Failed to parse stored leads', e)
+        }
+      }
+    }
     return mockLeads
   }
   
@@ -88,7 +106,10 @@ export class MockDataService {
   
   async createLead(leadData: Partial<Lead>): Promise<Lead> {
     await delay()
-    // In a real app, this would save to database
+    // Get existing leads
+    const existingLeads = await this.getLeads()
+    
+    // Create new lead
     const newLead: Lead = {
       id: `lead-${Date.now()}`,
       companyName: leadData.companyName || '',
@@ -98,7 +119,7 @@ export class MockDataService {
       contactPhone: leadData.contactPhone || '',
       contactName: leadData.contactName || '',
       status: 'active',
-      pipelineStage: 'prospecting',
+      pipelineStage: leadData.pipelineStage || 'prospecting',
       aiScore: leadData.aiScore || 50,
       aiScoreBreakdown: leadData.aiScoreBreakdown || {
         companySize: 50,
@@ -109,25 +130,55 @@ export class MockDataService {
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      assignedTo: leadData.assignedTo || '',
-      assignedToName: leadData.assignedToName || '',
+      assignedTo: leadData.assignedTo || 'emp-001',
+      assignedToName: leadData.assignedToName || 'Current User',
       notes: leadData.notes || '',
-      activities: [],
-      ...leadData,
+      activities: [
+        {
+          id: `${Date.now()}-act-1`,
+          type: 'note',
+          description: 'Lead added to system',
+          timestamp: new Date().toISOString(),
+          performedBy: 'Current User',
+        },
+      ],
+      estimatedRevenue: leadData.estimatedRevenue,
+      expectedCloseDate: leadData.expectedCloseDate,
+      companySize: leadData.companySize,
+      website: leadData.website,
+      linkedin: leadData.linkedin,
     }
+    
+    // Add to existing leads
+    const updatedLeads = [newLead, ...existingLeads]
+    
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(updatedLeads))
+    }
+    
     return newLead
   }
   
   async updateLead(id: string, updates: Partial<Lead>): Promise<Lead | null> {
     await delay()
-    const lead = mockLeads.find(l => l.id === id)
+    const leads = await this.getLeads()
+    const lead = leads.find(l => l.id === id)
     if (!lead) return null
     
-    return {
+    const updatedLead = {
       ...lead,
       ...updates,
       updatedAt: new Date().toISOString(),
     }
+    
+    // Update in storage
+    const updatedLeads = leads.map(l => l.id === id ? updatedLead : l)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(updatedLeads))
+    }
+    
+    return updatedLead
   }
   
   // ====================
@@ -136,24 +187,97 @@ export class MockDataService {
   
   async getClients(): Promise<Client[]> {
     await delay()
-    // For now, return empty array - will be populated with converted leads
+    // Try to get from localStorage first
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEYS.CLIENTS)
+      if (stored) {
+        try {
+          return JSON.parse(stored)
+        } catch (e) {
+          console.error('Failed to parse stored clients', e)
+        }
+      }
+    }
     return []
+  }
+  
+  async createClient(clientData: Partial<Client>): Promise<Client> {
+    await delay()
+    // Get existing clients
+    const existingClients = await this.getClients()
+    
+    // Create new client
+    const newClient: Client = {
+      id: `client-${Date.now()}`,
+      companyName: clientData.companyName || '',
+      industry: clientData.industry || '',
+      country: clientData.country || '',
+      city: clientData.city,
+      address: clientData.address,
+      phone: clientData.phone,
+      email: clientData.email || '',
+      website: clientData.website,
+      lifecycleStage: 'onboarding',
+      status: 'active',
+      lifecycleHistory: [
+        {
+          stage: 'onboarding',
+          startDate: new Date().toISOString(),
+          notes: 'Client onboarding initiated',
+        },
+      ],
+      assignedRM: clientData.assignedRM || 'emp-001',
+      assignedRMName: clientData.assignedRMName || 'Current User',
+      assignedOfficer: clientData.assignedOfficer || 'emp-002',
+      assignedOfficerName: clientData.assignedOfficerName || 'Compliance Officer',
+      riskLevel: 'medium',
+      riskAssessment: {
+        overallScore: 50,
+        lastAssessmentDate: new Date().toISOString(),
+        nextReviewDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        factors: [],
+        assessedBy: 'System',
+        notes: 'Initial risk assessment pending',
+      },
+      documents: [],
+      requiredDocuments: ['incorporation_certificate', 'proof_of_address', 'identification'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastContactDate: new Date().toISOString(),
+      onboardingStartDate: new Date().toISOString(),
+      annualRevenue: clientData.annualRevenue,
+      numberOfEmployees: clientData.numberOfEmployees,
+      primaryContact: clientData.primaryContact,
+      notes: clientData.notes,
+    }
+    
+    // Add to existing clients
+    const updatedClients = [newClient, ...existingClients]
+    
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(updatedClients))
+    }
+    
+    return newClient
   }
   
   async getClientById(id: string): Promise<Client | null> {
     await delay()
-    // Will be implemented when we have client data
-    return null
+    const clients = await this.getClients()
+    return clients.find(client => client.id === id) || null
   }
   
   async getClientsByLifecycleStage(stage: LifecycleStage): Promise<Client[]> {
     await delay()
-    return []
+    const clients = await this.getClients()
+    return clients.filter(client => client.lifecycleStage === stage)
   }
   
   async getClientsByStatus(status: ClientStatus): Promise<Client[]> {
     await delay()
-    return []
+    const clients = await this.getClients()
+    return clients.filter(client => client.status === status)
   }
   
   // ====================
@@ -202,6 +326,34 @@ export class MockDataService {
       isRequired: documentData.isRequired || false,
       version: 1,
       ...documentData,
+    }
+    
+    // Emit real-time event
+    realtimeService.emit('document:uploaded', {
+      documentId: newDocument.id,
+      document: newDocument,
+      entityId: newDocument.clientId,
+      entityType: 'client',
+    })
+    
+    // Get assigned compliance officer and send notification
+    try {
+      const officer = await assignmentService.getAssignedComplianceOfficer(newDocument.clientId)
+      if (officer) {
+        await notificationService.addNotification({
+          title: 'New Document Uploaded',
+          message: `${documentData.uploadedByName || 'Client'} uploaded ${newDocument.type.replace('_', ' ')} - ${newDocument.name}`,
+          type: 'info',
+          actionUrl: '/compliance/documents',
+          metadata: {
+            documentId: newDocument.id,
+            clientId: newDocument.clientId,
+            documentType: newDocument.type,
+          },
+        })
+      }
+    } catch (error) {
+      console.error('Failed to send document upload notification:', error)
     }
     
     return newDocument
@@ -269,6 +421,42 @@ export class MockDataService {
       timestamp: new Date().toISOString(),
       attachments: messageData.attachments || [],
       read: false,
+    }
+    
+    // Emit real-time event
+    realtimeService.emit('message:sent', {
+      messageId: newMessage.id,
+      message: newMessage,
+      conversationId: newMessage.conversationId,
+    })
+    
+    // If message is from client/vendor, notify assigned employee
+    if (messageData.senderType === 'client' || messageData.senderType === 'vendor') {
+      try {
+        // Extract client/vendor ID from conversation (in real app, would come from conversation metadata)
+        const clientId = 'client-1' // Mock - would get from conversation
+        
+        const officer = await assignmentService.getAssignedOfficer(clientId, messageData.senderType as 'client' | 'vendor')
+        if (officer) {
+          const previewContent = newMessage.content.length > 100 
+            ? newMessage.content.substring(0, 100) + '...' 
+            : newMessage.content
+          
+          await notificationService.addNotification({
+            title: `New Message from ${messageData.senderName}`,
+            message: previewContent,
+            type: 'info',
+            actionUrl: `/compliance/messages/${newMessage.conversationId}`,
+            metadata: {
+              messageId: newMessage.id,
+              conversationId: newMessage.conversationId,
+              senderId: newMessage.senderId,
+            },
+          })
+        }
+      } catch (error) {
+        console.error('Failed to send message notification:', error)
+      }
     }
     
     return newMessage

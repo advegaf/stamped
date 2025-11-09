@@ -55,7 +55,11 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 )
 Select.displayName = 'Select'
 
-export { Select }//faggot fucker
+// Stub exports for compatibility with compound component usage
+// These are not functional but prevent import errors
+export const SelectContent = () => null
+export const SelectItem = () => null  
+export const SelectTrigger = () => null
+export const SelectValue = () => null
 
-//faggot fucker
-
+export { Select }

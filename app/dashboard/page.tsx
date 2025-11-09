@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -24,8 +25,11 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth()
+  
   // Simulate role detection - in real app, get from auth context
   const userRole = 'relationship_manager' // Mock for now
 
@@ -123,57 +127,78 @@ export default function DashboardPage() {
       title="Dashboard"
       notificationCount={upcomingMeetings.length}
       userRole="relationship_manager"
-      userName="Sarah Chen"
+      userName={user?.name}
     >
       <div className="space-y-8 md:space-y-10">
         {/* welcome message */}
-        <div className="animate-fade-in-up">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <h1 className="font-sans text-4xl md:text-5xl font-bold text-neutral-900">
-            Welcome back, Sarah
+            Welcome back, {user?.name?.split(' ')[0] || 'there'}
           </h1>
-          <p className="mt-2 text-lg text-neutral-600">
+          <p className="mt-3 text-lg text-neutral-600">
             Here's your pipeline overview and upcoming activities.
           </p>
-        </div>
+        </motion.div>
 
         {/* stats cards at top */}
-        <div className="grid gap-4 md:gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 md:gap-6 lg:gap-7 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, index) => {
             const Icon = stat.icon
             return (
-              <Card key={index} className="transition-all duration-300 hover:shadow-2xl border-neutral-200/50 bg-white/90">
-                <CardContent className="p-6 md:p-7">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-neutral-600">
-                        {stat.title}
-                      </p>
-                      <p className="mt-2 text-3xl font-bold text-neutral-900">
-                        {stat.value}
-                      </p>
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {stat.change}
-                      </p>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="group transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-neutral-200/50 bg-white/90 h-full">
+                  <CardContent className="p-6 md:p-7">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-neutral-600 mb-2">
+                          {stat.title}
+                        </p>
+                        <p className="text-3xl font-bold text-neutral-900 mb-2 transition-colors group-hover:text-primary-700">
+                          {stat.value}
+                        </p>
+                        <p className="text-xs text-neutral-500 flex items-center gap-1">
+                          {stat.trend === 'up' ? (
+                            <TrendingUp className="h-3 w-3 text-green-600" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3 text-red-600" />
+                          )}
+                          {stat.change}
+                        </p>
+                      </div>
+                      <div
+                        className={cn(
+                          'rounded-xl p-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3',
+                          stat.variant === 'error' && 'bg-red-100 text-red-600',
+                          stat.variant === 'warning' && 'bg-yellow-100 text-yellow-600',
+                          stat.variant === 'success' && 'bg-green-100 text-green-600',
+                          stat.variant === 'default' && 'bg-gradient-to-br from-primary-100 to-turquoise-100 text-primary-600'
+                        )}
+                      >
+                        <Icon className="h-6 w-6" />
+                      </div>
                     </div>
-                    <div
-                      className={cn(
-                        'rounded-lg p-3',
-                        stat.variant === 'error' && 'bg-red-100 text-red-600',
-                        stat.variant === 'warning' && 'bg-yellow-100 text-yellow-600',
-                        stat.variant === 'success' && 'bg-green-100 text-green-600',
-                        stat.variant === 'default' && 'bg-primary-100 text-primary-600'
-                      )}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )
           })}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="grid gap-6 lg:grid-cols-3"
+        >
           {/* Top Prospects */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -184,35 +209,42 @@ export default function DashboardPage() {
                 </CardDescription>
               </div>
               <Link href="/leads">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="group">
                   View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {topProspects.map((lead) => (
-                  <Link key={lead.id} href={`/leads/${lead.id}`}>
-                    <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-4 transition-all hover:border-primary-300 hover:shadow-md">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
-                          <Building2 className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-neutral-900">
-                            {lead.companyName}
-                          </p>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-neutral-600">
-                            <span>{lead.industry}</span>
-                            <span>•</span>
-                            <span>{formatCurrency(lead.estimatedRevenue || 0)}</span>
+              <div className="space-y-3">
+                {topProspects.map((lead, index) => (
+                  <motion.div
+                    key={lead.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
+                  >
+                    <Link href={`/leads/${lead.id}`}>
+                      <div className="group flex items-center justify-between rounded-xl border border-neutral-200/50 bg-white/50 p-4 transition-all duration-300 hover:border-primary-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-100 to-turquoise-100 text-primary-600 transition-transform group-hover:scale-110 group-hover:rotate-3">
+                            <Building2 className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-neutral-900 group-hover:text-primary-700 transition-colors">
+                              {lead.companyName}
+                            </p>
+                            <div className="mt-1 flex items-center gap-2 text-xs text-neutral-600">
+                              <span>{lead.industry}</span>
+                              <span>•</span>
+                              <span className="font-medium text-green-600">{formatCurrency(lead.estimatedRevenue || 0)}</span>
+                            </div>
                           </div>
                         </div>
+                        <AIScoreBadge score={lead.aiScore} breakdown={lead.aiScoreBreakdown} size="sm" />
                       </div>
-                      <AIScoreBadge score={lead.aiScore} breakdown={lead.aiScoreBreakdown} size="sm" />
-                    </div>
-                  </Link>
+                    </Link>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
@@ -227,26 +259,33 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 {upcomingMeetings.length > 0 ? (
-                  upcomingMeetings.map((lead) => (
-                    <Link key={lead.id} href={`/leads/${lead.id}`}>
-                      <div className="rounded-lg border border-neutral-200 p-3 transition-all hover:border-primary-300 hover:shadow-sm">
-                        <div className="flex items-center gap-2 text-sm font-medium text-neutral-900">
-                          <Calendar className="h-4 w-4 text-primary-600" />
-                          {lead.companyName}
-                        </div>
-                        <p className="mt-1 text-xs text-neutral-600">
-                          {lead.contactName}
-                        </p>
-                        {lead.expectedCloseDate && (
-                          <p className="mt-1 text-xs text-neutral-500">
-                            {new Date(lead.expectedCloseDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
+                  upcomingMeetings.map((lead, index) => (
+                    <motion.div
+                      key={lead.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
+                    >
+                      <Link href={`/leads/${lead.id}`}>
+                        <div className="group rounded-xl border border-neutral-200/50 bg-white/50 p-3 transition-all duration-300 hover:border-primary-300 hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900 group-hover:text-primary-700 transition-colors">
+                            <Calendar className="h-4 w-4 text-primary-600 transition-transform group-hover:scale-110" />
+                            {lead.companyName}
+                          </div>
+                          <p className="mt-1.5 text-xs text-neutral-600">
+                            {lead.contactName}
                           </p>
-                        )}
-                      </div>
-                    </Link>
+                          {lead.expectedCloseDate && (
+                            <p className="mt-1 text-xs font-medium text-primary-600">
+                              {new Date(lead.expectedCloseDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    </motion.div>
                   ))
                 ) : (
                   <p className="text-sm text-neutral-500">No meetings scheduled</p>
@@ -254,10 +293,15 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Pipeline Overview & Recent Activity */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="grid gap-6 lg:grid-cols-2"
+        >
           {/* Pipeline Overview */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -297,10 +341,15 @@ export default function DashboardPage() {
               <Timeline items={recentActivity} />
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* quick action buttons */}
-        <Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          <Card>
           <CardHeader>
             <CardTitle className="font-sans text-2xl">Quick Actions</CardTitle>
             <CardDescription>
@@ -321,19 +370,29 @@ export default function DashboardPage() {
                   <span>View Pipeline</span>
                 </Button>
               </Link>
-              <Link href="/leads" className="block">
+              <Link href="/leads/schedule-meeting" className="block">
                 <Button variant="outline" className="w-full h-auto flex-col py-6">
                   <Calendar className="mb-2 h-8 w-8" />
                   <span>Schedule Meeting</span>
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full h-auto flex-col py-6">
-                <CheckCircle className="mb-2 h-8 w-8" />
-                <span>Export Report</span>
-              </Button>
+              <div className="relative group">
+                <Button 
+                  variant="outline" 
+                  className="w-full h-auto flex-col py-6 opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                  <CheckCircle className="mb-2 h-8 w-8" />
+                  <span>Export Report</span>
+                </Button>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-neutral-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  Coming soon
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </DashboardShell>
   )

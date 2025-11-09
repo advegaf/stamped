@@ -54,9 +54,9 @@ export default function ComplianceDashboardPage() {
 
   // Calculate document stats
   const docStats = {
-    pending: documents.filter((doc) => doc.status === 'UPLOADED' || doc.status === 'PENDING' || doc.status === 'REVIEWING').length,
-    approved: documents.filter((doc) => doc.status === 'APPROVED').length,
-    rejected: documents.filter((doc) => doc.status === 'REJECTED').length,
+    pending: documents.filter((doc) => doc.status === 'uploaded' || doc.status === 'pending_upload' || doc.status === 'under_review').length,
+    approved: documents.filter((doc) => doc.status === 'approved').length,
+    rejected: documents.filter((doc) => doc.status === 'rejected').length,
     total: documents.length,
   }
 
@@ -75,21 +75,21 @@ export default function ComplianceDashboardPage() {
 
   // Get pending documents
   const pendingDocs = documents
-    .filter((doc) => doc.status === 'UPLOADED' || doc.status === 'PENDING' || doc.status === 'REVIEWING')
+    .filter((doc) => doc.status === 'uploaded' || doc.status === 'pending_upload' || doc.status === 'under_review')
     .slice(0, 5)
 
   // Recent activity (recent document reviews)
   const recentActivity = documents
-    .filter((doc) => doc.status === 'APPROVED' || doc.status === 'REJECTED')
-    .filter((doc) => doc.reviewDate)
-    .sort((a, b) => new Date(b.reviewDate!).getTime() - new Date(a.reviewDate!).getTime())
+    .filter((doc) => doc.status === 'approved' || doc.status === 'rejected')
+    .filter((doc) => doc.reviewedAt)
+    .sort((a, b) => new Date(b.reviewedAt!).getTime() - new Date(a.reviewedAt!).getTime())
     .slice(0, 5)
     .map((doc) => ({
       id: doc.id,
       title: `${doc.fileName} - ${doc.status}`,
-      description: `${doc.documentType.replace(/_/g, ' ')} • Client: ${doc.clientId}`,
-      timestamp: new Date(doc.reviewDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      variant: doc.status === 'APPROVED' ? ('success' as const) : ('error' as const),
+      description: `${doc.type.replace(/_/g, ' ')} • Client: ${doc.clientId}`,
+      timestamp: new Date(doc.reviewedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      variant: doc.status === 'approved' ? ('success' as const) : ('error' as const),
     }))
 
   const stats = [
@@ -170,7 +170,7 @@ export default function ComplianceDashboardPage() {
                         stat.variant === 'error' && 'bg-red-100 text-red-600',
                         stat.variant === 'warning' && 'bg-yellow-100 text-yellow-600',
                         stat.variant === 'success' && 'bg-green-100 text-green-600',
-                        stat.variant === 'default' && 'bg-primary-100 text-primary-600'
+                        stat.variant === 'success' && 'bg-green-100 text-green-600'
                       )}
                     >
                       <Icon className="h-6 w-6" />
@@ -216,7 +216,7 @@ export default function ComplianceDashboardPage() {
                             {doc.fileName}
                           </p>
                           <p className="text-xs text-neutral-600 mt-1">
-                            {doc.documentType.replace(/_/g, ' ')} • Client: {doc.clientId}
+                            {doc.type.replace(/_/g, ' ')} • Client: {doc.clientId}
                           </p>
                         </div>
                       </div>
@@ -341,14 +341,32 @@ export default function ComplianceDashboardPage() {
                 <span>Risk Assessment</span>
               </Button>
             </Link>
-            <Button variant="outline" className="w-full h-auto flex-col py-6">
-              <TrendingUp className="mb-2 h-8 w-8" />
-              <span>Compliance Report</span>
-            </Button>
-            <Button variant="outline" className="w-full h-auto flex-col py-6">
-              <CheckCircle className="mb-2 h-8 w-8" />
-              <span>Audit Log</span>
-            </Button>
+            <div className="relative group">
+              <Button 
+                variant="outline" 
+                className="w-full h-auto flex-col py-6 opacity-50 cursor-not-allowed"
+                disabled
+              >
+                <TrendingUp className="mb-2 h-8 w-8" />
+                <span>Compliance Report</span>
+              </Button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-neutral-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Coming soon
+              </div>
+            </div>
+            <div className="relative group">
+              <Button 
+                variant="outline" 
+                className="w-full h-auto flex-col py-6 opacity-50 cursor-not-allowed"
+                disabled
+              >
+                <CheckCircle className="mb-2 h-8 w-8" />
+                <span>Audit Log</span>
+              </Button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-neutral-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Coming soon
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

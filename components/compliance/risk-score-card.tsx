@@ -38,6 +38,8 @@ interface RiskScoreCardProps {
 }
 
 export default function RiskScoreCard({ data, onViewDetails }: RiskScoreCardProps) {
+  const [expandedItem, setExpandedItem] = React.useState<string | null>(null)
+  
   const getRiskLevelColor = (level: RiskLevel) => {
     switch (level) {
       case 'Low':
@@ -83,16 +85,42 @@ export default function RiskScoreCard({ data, onViewDetails }: RiskScoreCardProp
   }
 
   const breakdownItems = [
-    { label: 'Geographic Risk', value: data.breakdown.geographic },
-    { label: 'Industry Risk', value: data.breakdown.industry },
-    { label: 'Ownership Structure', value: data.breakdown.ownership },
-    { label: 'Compliance History', value: data.breakdown.compliance },
-    { label: 'Adverse Media', value: data.breakdown.adverseMedia },
-    { label: 'Sanctions Screening', value: data.breakdown.sanctions },
+    { 
+      label: 'Geographic Risk', 
+      value: data.breakdown.geographic,
+      explanation: 'Risk associated with operating jurisdictions and geographic exposure'
+    },
+    { 
+      label: 'Industry Risk', 
+      value: data.breakdown.industry,
+      explanation: 'Sector-specific risks and regulatory requirements'
+    },
+    { 
+      label: 'Ownership Structure', 
+      value: data.breakdown.ownership,
+      explanation: 'Complexity and transparency of corporate structure'
+    },
+    { 
+      label: 'Compliance History', 
+      value: data.breakdown.compliance,
+      explanation: 'Track record of regulatory compliance and violations'
+    },
+    { 
+      label: 'Adverse Media', 
+      value: data.breakdown.adverseMedia,
+      explanation: 'Negative news coverage and reputational concerns'
+    },
+    { 
+      label: 'Sanctions Screening', 
+      value: data.breakdown.sanctions,
+      explanation: 'Matches against sanctions lists and watchlists'
+    },
   ]
 
+  const needsHumanReview = data.riskLevel === 'High' || data.riskLevel === 'Critical'
+
   return (
-    <Card className="transition-all duration-300 hover:shadow-lg">
+    <Card className={`transition-all duration-300 hover:shadow-lg ${needsHumanReview ? 'border-2 border-orange-500' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -132,6 +160,22 @@ export default function RiskScoreCard({ data, onViewDetails }: RiskScoreCardProp
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Human Review Warning */}
+        {needsHumanReview && (
+          <div className="rounded-lg border-2 border-orange-500 bg-orange-50 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-orange-900">⚠️ Human Review Required</p>
+                <p className="text-xs text-orange-800 mt-1">
+                  This entity requires immediate human review due to {data.riskLevel.toLowerCase()} risk level. 
+                  Review all risk factors and flags before proceeding.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Overall Risk Score */}
         <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
           <div className="flex items-center justify-between mb-2">
@@ -161,12 +205,26 @@ export default function RiskScoreCard({ data, onViewDetails }: RiskScoreCardProp
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-neutral-700">{item.label}</span>
-                  <span className={cn('font-semibold', getScoreColor(item.value))}>
-                    {item.value}
-                  </span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedItem(expandedItem === item.label ? null : item.label)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-neutral-700 hover:text-neutral-900 transition-colors flex items-center gap-1">
+                      {item.label}
+                      <span className="text-xs text-neutral-500">ℹ️</span>
+                    </span>
+                    <span className={cn('font-semibold', getScoreColor(item.value))}>
+                      {item.value}
+                    </span>
+                  </div>
+                </button>
+                {expandedItem === item.label && (
+                  <div className="mb-2 text-xs text-neutral-600 bg-neutral-50 p-2 rounded border border-neutral-200">
+                    {item.explanation}
+                  </div>
+                )}
                 <Progress
                   value={item.value}
                   className="h-1.5"

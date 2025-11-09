@@ -5,7 +5,7 @@ import { Chatbot } from '@/components/ai-chatbot/chatbot'
 import { AtmosphericBackground } from '@/components/landing/atmospheric-background'
 import { useAuth } from '@/lib/hooks/useAuth'
 
-export default function ClientPortalLayout({
+export default function VendorPortalLayout({
   children,
 }: {
   children: React.ReactNode
@@ -14,8 +14,8 @@ export default function ClientPortalLayout({
 
   // Mock context - in production, this would come from auth/user state
   const chatbotContext = {
-    clientId: 'client-1',
-    clientName: user?.name || 'Client',
+    clientId: 'vendor-1',
+    clientName: user?.name || 'Vendor',
     onboardingStatus: 'In Progress',
     pendingDocuments: 1,
   }
@@ -24,8 +24,8 @@ export default function ClientPortalLayout({
     <AtmosphericBackground variant="light">
       <div className="flex min-h-screen flex-col">
         <UnifiedNav 
-          userType="client" 
-          userName={user?.name || 'Client'}
+          userType="vendor" 
+          userName={user?.name || 'Vendor'}
         />
         <main className="flex-1 p-8 md:p-10 lg:p-12">
           <div className="mx-auto max-w-7xl">

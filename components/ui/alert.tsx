@@ -65,5 +65,18 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
 )
 Alert.displayName = 'Alert'
 
+// Stub exports for compatibility with compound component usage
+export const AlertTitle = ({ children, className = '', ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+  <h5 className={`font-medium leading-none tracking-tight ${className}`} {...props}>
+    {children}
+  </h5>
+)
+
+export const AlertDescription = ({ children, className = '', ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
+  <div className={`text-sm [&_p]:leading-relaxed ${className}`} {...props}>
+    {children}
+  </div>
+)
+
 export { Alert, alertVariants }
 

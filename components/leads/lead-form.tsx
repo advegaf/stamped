@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Loader2, Save, X, AlertCircle } from 'lucide-react'
+import { Loader2, Save, X, AlertCircle, CheckCircle } from 'lucide-react'
 import { aiLeadScoringService } from '@/lib/services/ai-lead-scoring'
+import { mockDataService } from '@/lib/services/mock-data-service'
 
 interface LeadFormData {
   companyName: string
@@ -66,6 +67,7 @@ export default function LeadForm({ onCancel }: LeadFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState<LeadFormData>({
     companyName: '',
     industry: '',
@@ -114,6 +116,7 @@ export default function LeadForm({ onCancel }: LeadFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccess(false)
 
     if (!validateForm()) {
       setError('Please fix the validation errors before submitting.')
@@ -136,18 +139,35 @@ export default function LeadForm({ onCancel }: LeadFormProps) {
         linkedin: formData.linkedin || undefined,
       })
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Create the lead using the mock data service
+      const newLead = await mockDataService.createLead({
+        companyName: formData.companyName,
+        industry: formData.industry as Industry,
+        country: formData.country,
+        contactEmail: formData.contactEmail,
+        contactPhone: formData.contactPhone,
+        contactName: formData.contactName,
+        pipelineStage: formData.pipelineStage as PipelineStage,
+        estimatedRevenue: formData.estimatedRevenue ? parseFloat(formData.estimatedRevenue) : undefined,
+        expectedCloseDate: formData.expectedCloseDate || undefined,
+        companySize: formData.companySize || undefined,
+        website: formData.website || undefined,
+        linkedin: formData.linkedin || undefined,
+        notes: formData.notes || undefined,
+        aiScore: aiScoreBreakdown.overall,
+        aiScoreBreakdown: aiScoreBreakdown,
+      })
 
-      // In a real app, you'd call the API here to create the lead
-      // const newLead = await mockDataService.createLead({ ...formData, aiScore: aiScoreBreakdown.overall, ... })
+      console.log('Lead created successfully:', newLead)
+      setSuccess(true)
 
-      // Navigate back to leads page
-      router.push('/leads')
+      // Wait a moment to show success message, then navigate
+      setTimeout(() => {
+        router.push('/leads')
+      }, 1000)
     } catch (err) {
       console.error('Failed to create lead:', err)
       setError('Failed to create lead. Please try again.')
-    } finally {
       setLoading(false)
     }
   }
@@ -171,6 +191,14 @@ export default function LeadForm({ onCancel }: LeadFormProps) {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert variant="success">
+          <CheckCircle className="h-4 w-4" />
+          <AlertTitle>Success!</AlertTitle>
+          <AlertDescription>Lead created successfully. Redirecting...</AlertDescription>
         </Alert>
       )}
 

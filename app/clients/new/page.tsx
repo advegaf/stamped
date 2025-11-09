@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Stepper } from '@/components/ui/stepper'
 import { FileUpload } from '@/components/ui/file-upload'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
+import { mockDataService } from '@/lib/services/mock-data-service'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { CheckCircle, AlertCircle } from 'lucide-react'
+import { BackButton } from '@/components/layout/back-button'
 
 const steps = [
   { label: 'Basic Information' },
@@ -52,6 +56,8 @@ export default function NewClientPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<File[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
     // step 1 - basic info
     legalName: '',
@@ -81,16 +87,86 @@ export default function NewClientPage() {
     anticipatedTransactionVolume: '',
   })
 
+  const [stepErrors, setStepErrors] = useState<Record<string, string>>({})
+
   const handleInputChange = (
     field: string,
     value: string
   ) => {
     setFormData({ ...formData, [field]: value })
+    // Clear error for this field
+    if (stepErrors[field]) {
+      setStepErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+  }
+
+  const validateStep = (step: number): boolean => {
+    const errors: Record<string, string> = {}
+
+    if (step === 1) {
+      if (!formData.legalName.trim()) {
+        errors.legalName = 'Legal name is required'
+      }
+      if (!formData.entityType) {
+        errors.entityType = 'Entity type is required'
+      }
+      if (!formData.registrationNumber.trim()) {
+        errors.registrationNumber = 'Registration number is required'
+      }
+      if (!formData.country) {
+        errors.country = 'Country is required'
+      }
+    } else if (step === 2) {
+      if (!formData.primaryContactName.trim()) {
+        errors.primaryContactName = 'Primary contact name is required'
+      }
+      if (!formData.primaryContactEmail.trim()) {
+        errors.primaryContactEmail = 'Primary contact email is required'
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.primaryContactEmail)) {
+        errors.primaryContactEmail = 'Please enter a valid email'
+      }
+      if (!formData.primaryContactPhone.trim()) {
+        errors.primaryContactPhone = 'Primary contact phone is required'
+      }
+      if (!formData.address.trim()) {
+        errors.address = 'Address is required'
+      }
+      if (!formData.city.trim()) {
+        errors.city = 'City is required'
+      }
+      if (!formData.state.trim()) {
+        errors.state = 'State/Province is required'
+      }
+      if (!formData.postalCode.trim()) {
+        errors.postalCode = 'Postal code is required'
+      }
+    } else if (step === 3) {
+      if (!formData.industry) {
+        errors.industry = 'Industry is required'
+      }
+      if (!formData.businessDescription.trim()) {
+        errors.businessDescription = 'Business description is required'
+      }
+      if (!formData.purposeOfRelationship.trim()) {
+        errors.purposeOfRelationship = 'Purpose of relationship is required'
+      }
+    }
+
+    setStepErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1)
+    if (validateStep(currentStep)) {
+      if (currentStep < steps.length) {
+        setCurrentStep(currentStep + 1)
+      }
+    } else {
+      setError('Please fill in all required fields before continuing.')
     }
   }
 
@@ -102,11 +178,42 @@ export default function NewClientPage() {
 
   const handleSubmit = async () => {
     setLoading(true)
-    // simulate api call, add real backend integration later
-    setTimeout(() => {
+    setError(null)
+    setSuccess(false)
+    
+    try {
+      // Create the client using the mock data service
+      const newClient = await mockDataService.createClient({
+        companyName: formData.legalName,
+        industry: formData.industry,
+        country: formData.country,
+        city: formData.city,
+        address: formData.address,
+        phone: formData.primaryContactPhone,
+        email: formData.primaryContactEmail,
+        annualRevenue: formData.annualRevenue ? parseFloat(formData.annualRevenue) : undefined,
+        numberOfEmployees: formData.numberOfEmployees ? parseInt(formData.numberOfEmployees) : undefined,
+        primaryContact: {
+          name: formData.primaryContactName,
+          title: 'Primary Contact',
+          email: formData.primaryContactEmail,
+          phone: formData.primaryContactPhone,
+        },
+        notes: `Registration Number: ${formData.registrationNumber}\nEntity Type: ${formData.entityType}\nBusiness Description: ${formData.businessDescription}`,
+      })
+      
+      console.log('Client created successfully:', newClient)
+      setSuccess(true)
+      
+      // Wait a moment to show success message, then navigate
+      setTimeout(() => {
+        router.push('/clients')
+      }, 1500)
+    } catch (err) {
+      console.error('Failed to create client:', err)
+      setError('Failed to create client. Please try again.')
       setLoading(false)
-      router.push('/clients')
-    }, 2000)
+    }
   }
 
   const handleFileChange = (newFiles: File[]) => {
@@ -120,6 +227,8 @@ export default function NewClientPage() {
   return (
     <DashboardShell title="New Client" userRole="compliance" userName="John Smith">
       <div className="mx-auto max-w-4xl space-y-6">
+        <BackButton href="/clients" label="Back to Clients" />
+        
         <Breadcrumbs
           items={[
             { label: 'Dashboard', href: '/dashboard' },
@@ -127,6 +236,22 @@ export default function NewClientPage() {
             { label: 'New Client' },
           ]}
         />
+
+        {error && (
+          <Alert variant="error">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {success && (
+          <Alert variant="success">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>Client created successfully. Redirecting...</AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>
@@ -144,6 +269,7 @@ export default function NewClientPage() {
                     placeholder="Acme Corporation Inc."
                     value={formData.legalName}
                     onChange={(e) => handleInputChange('legalName', e.target.value)}
+                    error={stepErrors.legalName}
                     required
                   />
                   <Input
@@ -155,29 +281,40 @@ export default function NewClientPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Select
-                    label="Entity Type"
-                    options={entityTypes}
-                    value={formData.entityType}
-                    onChange={(e) => handleInputChange('entityType', e.target.value)}
-                    required
-                  />
+                  <div>
+                    <Select
+                      label="Entity Type"
+                      options={entityTypes}
+                      value={formData.entityType}
+                      onChange={(e) => handleInputChange('entityType', e.target.value)}
+                      required
+                    />
+                    {stepErrors.entityType && (
+                      <p className="text-xs text-red-500 mt-1">{stepErrors.entityType}</p>
+                    )}
+                  </div>
                   <Input
                     label="Registration Number"
                     placeholder="123456789"
                     value={formData.registrationNumber}
                     onChange={(e) => handleInputChange('registrationNumber', e.target.value)}
+                    error={stepErrors.registrationNumber}
                     required
                   />
                 </div>
 
-                <Select
-                  label="Country of Incorporation"
-                  options={countries}
-                  value={formData.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  required
-                />
+                <div>
+                  <Select
+                    label="Country of Incorporation"
+                    options={countries}
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    required
+                  />
+                  {stepErrors.country && (
+                    <p className="text-xs text-red-500 mt-1">{stepErrors.country}</p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -196,6 +333,7 @@ export default function NewClientPage() {
                       onChange={(e) =>
                         handleInputChange('primaryContactName', e.target.value)
                       }
+                      error={stepErrors.primaryContactName}
                       required
                     />
                     <div className="grid gap-4 md:grid-cols-2">
@@ -207,6 +345,7 @@ export default function NewClientPage() {
                         onChange={(e) =>
                           handleInputChange('primaryContactEmail', e.target.value)
                         }
+                        error={stepErrors.primaryContactEmail}
                         required
                       />
                       <Input
@@ -217,6 +356,7 @@ export default function NewClientPage() {
                         onChange={(e) =>
                           handleInputChange('primaryContactPhone', e.target.value)
                         }
+                        error={stepErrors.primaryContactPhone}
                         required
                       />
                     </div>
@@ -264,19 +404,25 @@ export default function NewClientPage() {
                     Business Address
                   </h3>
                   <div className="space-y-4">
-                    <Textarea
-                      label="Street Address"
-                      placeholder="123 Main Street, Suite 100"
-                      value={formData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      required
-                    />
+                    <div>
+                      <Textarea
+                        label="Street Address"
+                        placeholder="123 Main Street, Suite 100"
+                        value={formData.address}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        required
+                      />
+                      {stepErrors.address && (
+                        <p className="text-xs text-red-500 mt-1">{stepErrors.address}</p>
+                      )}
+                    </div>
                     <div className="grid gap-4 md:grid-cols-3">
                       <Input
                         label="City"
                         placeholder="New York"
                         value={formData.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
+                        error={stepErrors.city}
                         required
                       />
                       <Input
@@ -284,6 +430,7 @@ export default function NewClientPage() {
                         placeholder="NY"
                         value={formData.state}
                         onChange={(e) => handleInputChange('state', e.target.value)}
+                        error={stepErrors.state}
                         required
                       />
                       <Input
@@ -291,6 +438,7 @@ export default function NewClientPage() {
                         placeholder="10001"
                         value={formData.postalCode}
                         onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                        error={stepErrors.postalCode}
                         required
                       />
                     </div>
@@ -302,13 +450,18 @@ export default function NewClientPage() {
             {/* step 3 form */}
             {currentStep === 3 && (
               <div className="space-y-4">
-                <Select
-                  label="Industry"
-                  options={industries}
-                  value={formData.industry}
-                  onChange={(e) => handleInputChange('industry', e.target.value)}
-                  required
-                />
+                <div>
+                  <Select
+                    label="Industry"
+                    options={industries}
+                    value={formData.industry}
+                    onChange={(e) => handleInputChange('industry', e.target.value)}
+                    required
+                  />
+                  {stepErrors.industry && (
+                    <p className="text-xs text-red-500 mt-1">{stepErrors.industry}</p>
+                  )}
+                </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <Input
@@ -331,27 +484,37 @@ export default function NewClientPage() {
                   />
                 </div>
 
-                <Textarea
-                  label="Business Description"
-                  placeholder="Provide a brief description of the business activities..."
-                  value={formData.businessDescription}
-                  onChange={(e) =>
-                    handleInputChange('businessDescription', e.target.value)
-                  }
-                  required
-                  rows={4}
-                />
+                <div>
+                  <Textarea
+                    label="Business Description"
+                    placeholder="Provide a brief description of the business activities..."
+                    value={formData.businessDescription}
+                    onChange={(e) =>
+                      handleInputChange('businessDescription', e.target.value)
+                    }
+                    required
+                    rows={4}
+                  />
+                  {stepErrors.businessDescription && (
+                    <p className="text-xs text-red-500 mt-1">{stepErrors.businessDescription}</p>
+                  )}
+                </div>
 
-                <Textarea
-                  label="Purpose of Relationship"
-                  placeholder="Describe the purpose of establishing this business relationship..."
-                  value={formData.purposeOfRelationship}
-                  onChange={(e) =>
-                    handleInputChange('purposeOfRelationship', e.target.value)
-                  }
-                  required
-                  rows={4}
-                />
+                <div>
+                  <Textarea
+                    label="Purpose of Relationship"
+                    placeholder="Describe the purpose of establishing this business relationship..."
+                    value={formData.purposeOfRelationship}
+                    onChange={(e) =>
+                      handleInputChange('purposeOfRelationship', e.target.value)
+                    }
+                    required
+                    rows={4}
+                  />
+                  {stepErrors.purposeOfRelationship && (
+                    <p className="text-xs text-red-500 mt-1">{stepErrors.purposeOfRelationship}</p>
+                  )}
+                </div>
 
                 <Input
                   label="Anticipated Transaction Volume (USD/Year)"

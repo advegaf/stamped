@@ -48,7 +48,7 @@ export function GradientBlob({
   return (
     <div
       className={cn(
-        'absolute rounded-full opacity-40 -z-10 animate-float',
+        'absolute rounded-full opacity-40 -z-10 animate-float pointer-events-none',
         sizeClasses[size],
         blurClasses[blur],
         colorClasses[color],

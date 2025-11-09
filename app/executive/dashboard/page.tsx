@@ -323,10 +323,19 @@ export default function ExecutiveDashboardPage() {
                 <span>Risk Overview</span>
               </Button>
             </Link>
-            <Button variant="outline" className="w-full h-auto flex-col py-6">
-              <BarChart3 className="mb-2 h-8 w-8" />
-              <span>Export Report</span>
-            </Button>
+            <div className="relative group">
+              <Button 
+                variant="outline" 
+                className="w-full h-auto flex-col py-6 opacity-50 cursor-not-allowed"
+                disabled
+              >
+                <BarChart3 className="mb-2 h-8 w-8" />
+                <span>Export Report</span>
+              </Button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-neutral-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Coming soon
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

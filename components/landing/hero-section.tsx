@@ -74,7 +74,7 @@ export function HeroSection() {
           </h1>
 
           {/* tagline - appears immediately */}
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3, ease: 'easeInOut' }}
@@ -84,7 +84,7 @@ export function HeroSection() {
           </motion.p>
 
           {/* description - appears immediately */}
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5, ease: 'easeInOut' }}

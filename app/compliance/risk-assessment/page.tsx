@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Loader2, Shield, AlertTriangle, CheckCircle, AlertCircle, Search, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { mockRiskScores } from '@/lib/mock-data/risk-scores'
+import { BackButton } from '@/components/layout/back-button'
 
 type EntityTypeFilter = 'all' | 'client' | 'vendor'
 type RiskLevelFilter = 'all' | RiskLevel
@@ -93,6 +94,8 @@ export default function RiskAssessmentPage() {
 
   return (
     <div className="space-y-6">
+      <BackButton href="/compliance" label="Back to Compliance" />
+      
       {/* Header */}
       <div>
         <h1 className="font-sans text-4xl font-bold text-neutral-900">Risk Assessment</h1>

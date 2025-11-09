@@ -62,6 +62,9 @@ export class AuthService {
           data: {
             full_name: data.name.trim(),
             display_name: data.name.trim(),
+            user_type: data.userType,
+            role: data.role || null,
+            company_name: data.companyName || null,
           },
         },
       })

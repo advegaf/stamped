@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/signup', '/auth/callback']
+  const publicRoutes = ['/', '/login', '/signup', '/auth/callback', '/employee-login']
   const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/auth/'))
 
   // If user is not signed in and trying to access protected route
@@ -70,9 +70,50 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If user is signed in and trying to access auth pages, redirect to dashboard
+  // If user is signed in and trying to access auth pages, redirect appropriately
   if (session && (pathname === '/login' || pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    const userType = session.user.user_metadata?.user_type || 'employee'
+    
+    // Redirect to appropriate dashboard based on user type
+    if (userType === 'client') {
+      return NextResponse.redirect(new URL('/client-portal/dashboard', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  // Role-based access control for authenticated users
+  if (session && !isPublicRoute) {
+    const userType = session.user.user_metadata?.user_type
+    const role = session.user.user_metadata?.role
+
+    // Client trying to access employee routes
+    if (userType === 'client' && !pathname.startsWith('/client-portal') && pathname !== '/settings') {
+      return NextResponse.redirect(new URL('/client-portal/dashboard', request.url))
+    }
+
+    // Employee trying to access client routes
+    if (userType === 'employee' && pathname.startsWith('/client-portal')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // Role-specific route access for employees
+    if (userType === 'employee') {
+      // Compliance-only routes
+      if (pathname.startsWith('/compliance') && role !== 'compliance_officer' && role !== 'executive') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+
+      // Risk analyst routes  
+      if (pathname.startsWith('/risk-analyst') && role !== 'risk_analyst' && role !== 'executive') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+
+      // Executive-only routes
+      if (pathname.startsWith('/executive') && role !== 'executive') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    }
   }
 
   return response
@@ -91,4 +132,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-

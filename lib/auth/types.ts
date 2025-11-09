@@ -2,6 +2,9 @@ export interface SignUpData {
   email: string
   password: string
   name: string
+  user_type: UserType
+  role?: EmployeeRole
+  companyName?: string
 }
 
 export interface SignInData {
@@ -45,7 +48,7 @@ export type EmployeeRole =
 
 export interface UserMetadata {
   name: string
-  userType: UserType
+  user_type: UserType
   role?: EmployeeRole // Only for employee users
   clientId?: string // For client users
   companyName?: string // For client users

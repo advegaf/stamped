@@ -1,20 +1,36 @@
 'use client'
 
-import React, { useState } from 'react'
-import { mockLeads } from '@/lib/mock-data/leads'
+import React, { useState, useEffect } from 'react'
+import { mockDataService } from '@/lib/services/mock-data-service'
 import { Lead, PipelineStage } from '@/lib/types/lead'
 import PipelineBoard from '@/components/leads/pipeline-board'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { TrendingUp, DollarSign, Target, Plus } from 'lucide-react'
+import { TrendingUp, DollarSign, Target, Plus, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
 export default function PipelinePage() {
-  // In a real app, this would come from a global state or API
-  const [leads, setLeads] = useState<Lead[]>(mockLeads)
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleStageChange = (leadId: string, newStage: PipelineStage) => {
+  // Fetch leads on mount
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const fetchedLeads = await mockDataService.getLeads()
+        setLeads(fetchedLeads)
+      } catch (error) {
+        console.error('Failed to fetch leads:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLeads()
+  }, [])
+
+  const handleStageChange = async (leadId: string, newStage: PipelineStage) => {
+    // Optimistically update UI
     setLeads((prevLeads) =>
       prevLeads.map((lead) =>
         lead.id === leadId
@@ -22,8 +38,17 @@ export default function PipelinePage() {
           : lead
       )
     )
-    // In a real app, you'd also call an API to persist this change
-    console.log(`Lead ${leadId} moved to ${newStage}`)
+    
+    // Persist the change
+    try {
+      await mockDataService.updateLead(leadId, {
+        pipelineStage: newStage,
+      })
+      console.log(`Lead ${leadId} moved to ${newStage}`)
+    } catch (error) {
+      console.error('Failed to update lead stage:', error)
+      // Optionally revert the optimistic update here
+    }
   }
 
   // Calculate stats
@@ -41,6 +66,14 @@ export default function PipelinePage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      </div>
+    )
   }
 
   return (

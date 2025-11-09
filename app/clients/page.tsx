@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { Button } from '@/components/ui/button'
@@ -15,67 +15,18 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plus, Filter, Download } from 'lucide-react'
-
-// mock data, replace with real api
-const mockClients = [
-  {
-    id: '1',
-    name: 'Acme Corporation',
-    country: 'United States',
-    industry: 'Technology',
-    status: 'Under Review',
-    riskLevel: 'high',
-    lastUpdated: '2024-01-15',
-  },
-  {
-    id: '2',
-    name: 'Global Solutions LLC',
-    country: 'United Kingdom',
-    industry: 'Financial Services',
-    status: 'Approved',
-    riskLevel: 'low',
-    lastUpdated: '2024-01-14',
-  },
-  {
-    id: '3',
-    name: 'TechStart Inc',
-    country: 'Canada',
-    industry: 'Technology',
-    status: 'Pending Documents',
-    riskLevel: 'medium',
-    lastUpdated: '2024-01-13',
-  },
-  {
-    id: '4',
-    name: 'International Trade Co',
-    country: 'Germany',
-    industry: 'Manufacturing',
-    status: 'Under Review',
-    riskLevel: 'medium',
-    lastUpdated: '2024-01-12',
-  },
-  {
-    id: '5',
-    name: 'Healthcare Partners',
-    country: 'United States',
-    industry: 'Healthcare',
-    status: 'Approved',
-    riskLevel: 'low',
-    lastUpdated: '2024-01-11',
-  },
-]
+import { Plus, Filter, Download, Loader2 } from 'lucide-react'
+import { mockDataService } from '@/lib/services/mock-data-service'
+import { Client } from '@/lib/types/client'
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
-    case 'Approved':
+    case 'active':
       return 'success'
-    case 'Under Review':
-      return 'warning'
-    case 'Pending Documents':
+    case 'inactive':
       return 'outline'
-    case 'Rejected':
-      return 'error'
+    case 'suspended':
+      return 'warning'
     default:
       return 'default'
   }
@@ -83,6 +34,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 const getRiskBadgeVariant = (level: string) => {
   switch (level) {
+    case 'critical':
     case 'high':
       return 'error'
     case 'medium':
@@ -94,13 +46,51 @@ const getRiskBadgeVariant = (level: string) => {
   }
 }
 
+const getLifecycleStageDisplay = (stage: string) => {
+  const stages: Record<string, string> = {
+    lead: 'Lead',
+    prospect: 'Prospect',
+    onboarding: 'Onboarding',
+    active: 'Active',
+    dormant: 'Dormant',
+    churned: 'Churned',
+  }
+  return stages[stage] || stage
+}
+
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [clients] = useState(mockClients)
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch clients on mount
+  useEffect(() => {
+    async function fetchClients() {
+      try {
+        const fetchedClients = await mockDataService.getClients()
+        setClients(fetchedClients)
+      } catch (error) {
+        console.error('Failed to fetch clients:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchClients()
+  }, [])
 
   const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase())
+    client.companyName.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  if (loading) {
+    return (
+      <DashboardShell title="Clients" userRole="compliance" userName="John Smith">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+        </div>
+      </DashboardShell>
+    )
+  }
 
   return (
     <DashboardShell title="Clients" userRole="compliance" userName="John Smith">
@@ -149,12 +139,12 @@ export default function ClientsPage() {
               <TableBody>
                 {filteredClients.map((client) => (
                   <TableRow key={client.id}>
-                    <TableCell className="font-medium">{client.name}</TableCell>
+                    <TableCell className="font-medium">{client.companyName}</TableCell>
                     <TableCell>{client.country}</TableCell>
                     <TableCell>{client.industry}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(client.status)}>
-                        {client.status}
+                        {getLifecycleStageDisplay(client.lifecycleStage)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -162,7 +152,7 @@ export default function ClientsPage() {
                         {client.riskLevel.toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell>{client.lastUpdated}</TableCell>
+                    <TableCell>{new Date(client.updatedAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/clients/${client.id}`}>
                         <Button variant="ghost" size="sm">

@@ -8,6 +8,9 @@ export interface AuthUser {
   email: string
   name: string
   avatarUrl?: string
+  userType: 'client' | 'employee'
+  role?: 'relationship_manager' | 'compliance_officer' | 'risk_analyst' | 'executive'
+  companyName?: string
 }
 
 export function useAuth() {
@@ -27,6 +30,9 @@ export function useAuth() {
                 session.user.user_metadata?.display_name || 
                 session.user.email?.split('@')[0] || 'User',
           avatarUrl: session.user.user_metadata?.avatar_url,
+          userType: session.user.user_metadata?.user_type || 'employee',
+          role: session.user.user_metadata?.role,
+          companyName: session.user.user_metadata?.company_name,
         })
       } else {
         setUser(null)
@@ -50,6 +56,9 @@ export function useAuth() {
                 currentUser.user_metadata?.display_name || 
                 currentUser.email?.split('@')[0] || 'User',
           avatarUrl: currentUser.user_metadata?.avatar_url,
+          userType: currentUser.user_metadata?.user_type || 'employee',
+          role: currentUser.user_metadata?.role,
+          companyName: currentUser.user_metadata?.company_name,
         })
       }
     } catch (err) {

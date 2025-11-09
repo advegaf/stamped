@@ -3,16 +3,21 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
-import { Eye, EyeOff, Mail, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, Mail, CheckCircle2, Building2, Briefcase, ShoppingBag, ArrowLeft } from 'lucide-react'
 import { authService } from '@/lib/auth/service'
 import { validateSignInForm } from '@/lib/auth/validation'
+import { AtmosphericBackground } from '@/components/landing/atmospheric-background'
+
+type UserType = 'client' | 'vendor' | 'employee' | null
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [selectedUserType, setSelectedUserType] = useState<UserType>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -78,8 +83,36 @@ function LoginForm() {
         return
       }
 
-      // Successful sign in - redirect to dashboard
-      router.push('/dashboard')
+      // Successful sign in - check if user has metadata for proper routing
+      const session = await authService.getSession()
+      const userType = session?.user?.user_metadata?.user_type
+      const userRole = session?.user?.user_metadata?.role
+
+      // If user has metadata, use it; otherwise use selected type
+      if (userType === 'client') {
+        router.push('/client-portal/dashboard')
+      } else if (userType === 'vendor') {
+        router.push('/vendor-portal/dashboard')
+      } else if (userType === 'employee') {
+        // Route based on employee role
+        if (userRole === 'compliance_officer') {
+          router.push('/compliance')
+        } else if (userRole === 'risk_analyst') {
+          router.push('/risk-analyst/dashboard')
+        } else if (userRole === 'executive') {
+          router.push('/executive/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
+      } else if (selectedUserType === 'client') {
+        // Fallback to selected type if no metadata
+        router.push('/client-portal/dashboard')
+      } else if (selectedUserType === 'vendor') {
+        router.push('/vendor-portal/dashboard')
+      } else {
+        // Default fallback to employee dashboard
+        router.push('/dashboard')
+      }
       router.refresh()
     } catch (err: any) {
       console.error('Login error:', err)
@@ -128,6 +161,106 @@ function LoginForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // User type selection cards
+  const userTypeCards = [
+    {
+      type: 'client' as UserType,
+      title: 'Client',
+      description: 'Access your onboarding portal and compliance documents',
+      icon: Building2,
+      gradient: 'from-primary-100/20 via-turquoise-100/10 to-primary-50/20',
+    },
+    {
+      type: 'vendor' as UserType,
+      title: 'Vendor',
+      description: 'Manage your vendor onboarding and documentation',
+      icon: ShoppingBag,
+      gradient: 'from-turquoise-100/20 via-cyan-100/10 to-turquoise-50/20',
+    },
+    {
+      type: 'employee' as UserType,
+      title: 'Employee',
+      description: 'Access employee dashboard and internal tools',
+      icon: Briefcase,
+      gradient: 'from-navy-100/20 via-primary-100/10 to-navy-50/20',
+    },
+  ]
+
+  // Show user type selection screen
+  if (!selectedUserType) {
+    return (
+      <AtmosphericBackground variant="light">
+        <div className="flex min-h-screen items-center justify-center p-4 md:p-6">
+          <div className="w-full max-w-5xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h1 className="text-4xl md:text-5xl font-serif font-bold text-neutral-900 mb-4">
+                Welcome to Stamped
+              </h1>
+              <p className="text-lg text-neutral-600">
+                Please select your user type to continue
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {userTypeCards.map((card, index) => {
+                const Icon = card.icon
+                return (
+                  <motion.button
+                    key={card.type}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    onClick={() => setSelectedUserType(card.type)}
+                    className="group relative overflow-hidden rounded-2xl border border-neutral-200/50 bg-white/80 backdrop-blur-xl p-8 text-left transition-all duration-500 hover:-translate-y-2 hover:border-primary-200 hover:shadow-2xl"
+                  >
+                    {/* Gradient glow effect on hover */}
+                    <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient}`} />
+                    </div>
+
+                    <div className="relative">
+                      {/* Icon */}
+                      <div className="inline-flex rounded-xl bg-gradient-to-br from-primary-500/10 via-turquoise-500/10 to-primary-400/10 p-4 text-primary-600 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-lg mb-6">
+                        <Icon className="h-8 w-8" />
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="font-serif text-2xl font-semibold text-neutral-900 transition-colors duration-300 group-hover:text-primary-700 mb-3">
+                        {card.title}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="text-neutral-600 leading-relaxed transition-colors duration-300 group-hover:text-neutral-700">
+                        {card.description}
+                      </p>
+
+                      {/* Arrow indicator on hover */}
+                      <div className="mt-6 flex items-center text-primary-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <span className="text-sm font-medium">Continue</span>
+                        <motion.div
+                          animate={{ x: [0, 4, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                          className="ml-2"
+                        >
+                          →
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </AtmosphericBackground>
+    )
   }
 
   // Show forgot password modal - success state
@@ -219,16 +352,43 @@ function LoginForm() {
     )
   }
 
+  // Get user type label
+  const userTypeLabel = selectedUserType
+    ? selectedUserType.charAt(0).toUpperCase() + selectedUserType.slice(1)
+    : ''
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 via-neutral-100/30 to-neutral-50 p-4 md:p-6">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-neutral-200/50 bg-white/80 backdrop-blur-xl p-8 md:p-10 shadow-2xl transition-shadow duration-200 hover:shadow-3xl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="rounded-2xl border border-neutral-200/50 bg-white/80 backdrop-blur-xl p-8 md:p-10 shadow-2xl transition-shadow duration-200 hover:shadow-3xl"
+        >
+          {/* Back button */}
+          <button
+            onClick={() => setSelectedUserType(null)}
+            className="mb-6 flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to selection
+          </button>
+
           <div className="mb-8">
+            {/* User type badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-sm font-medium mb-4">
+              {selectedUserType === 'client' && <Building2 className="h-4 w-4" />}
+              {selectedUserType === 'vendor' && <ShoppingBag className="h-4 w-4" />}
+              {selectedUserType === 'employee' && <Briefcase className="h-4 w-4" />}
+              <span>{userTypeLabel} Login</span>
+            </div>
+
             <h2 className="text-3xl font-semibold text-neutral-900 mb-2 font-sans">
               Welcome Back
             </h2>
             <p className="text-neutral-600">
-              Sign in to your account to continue
+              Sign in to your {userTypeLabel.toLowerCase()} account to continue
             </p>
           </div>
 
@@ -358,7 +518,7 @@ function LoginForm() {
               Sign up
             </Link>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   )

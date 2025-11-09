@@ -26,44 +26,58 @@ export default function AdverseMediaPage() {
   const [loading, setLoading] = useState(false)
   const [searchPerformed, setSearchPerformed] = useState(false)
   const [results, setResults] = useState<any[]>([])
+  const [error, setError] = useState('')
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setLoading(true)
     setSearchPerformed(false)
+    setError('')
 
-    // simulate api call, replace with real news api integration
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const response = await fetch('/api/adverse-media', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          entityName,
+          dateRange,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch adverse media data')
+      }
+
+      const data = await response.json()
+      
+      // Transform API response to match existing format
+      const transformedResults = data.findings.map((finding: any, index: number) => ({
+        id: `${Date.now()}-${index}`,
+        title: finding.title,
+        source: finding.source,
+        date: finding.date,
+        url: '#', // DeepSeek doesn't provide URLs
+        severity: finding.severity.toLowerCase(),
+        summary: finding.description,
+        keywords: [finding.category.toLowerCase()],
+      }))
+      
+      setResults(transformedResults)
       setSearchPerformed(true)
       
-      // mock results for demo, will use real api later
-      if (entityName.toLowerCase().includes('acme')) {
-        setResults([
-          {
-            id: '1',
-            title: 'Acme Corp Faces Lawsuit Over Data Breach',
-            source: 'TechNews Daily',
-            date: '2024-01-10',
-            url: 'https://example.com/news1',
-            severity: 'high',
-            summary: 'Company faces class action lawsuit following major data breach affecting 50,000 customers.',
-            keywords: ['lawsuit', 'data breach', 'security'],
-          },
-          {
-            id: '2',
-            title: 'Acme Corporation Settles Regulatory Dispute',
-            source: 'Financial Times',
-            date: '2024-01-05',
-            url: 'https://example.com/news2',
-            severity: 'medium',
-            summary: 'Settlement reached with regulatory authorities over compliance violations.',
-            keywords: ['regulatory', 'settlement', 'compliance'],
-          },
-        ])
-      } else {
-        setResults([])
+      if (transformedResults.length === 0) {
+        setError('')
       }
-    }, 2000)
+    } catch (err) {
+      console.error('Adverse media search error:', err)
+      setError(err instanceof Error ? err.message : 'An error occurred while searching. Please try again.')
+      setResults([])
+      setSearchPerformed(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getSeverityBadgeVariant = (severity: string) => {
@@ -115,7 +129,7 @@ export default function AdverseMediaPage() {
           <CardHeader>
             <CardTitle>Generate Adverse Media Report</CardTitle>
             <CardDescription>
-              Search for negative news and adverse media about clients and vendors
+              AI-powered search for negative news and adverse media about clients and vendors using DeepSeek
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -144,6 +158,12 @@ export default function AdverseMediaPage() {
                 />
               </div>
 
+              {error && (
+                <Alert variant="error" title="Error">
+                  {error}
+                </Alert>
+              )}
+              
               <Button
                 onClick={handleSearch}
                 loading={loading}
@@ -152,7 +172,7 @@ export default function AdverseMediaPage() {
                 className="w-full md:w-auto"
               >
                 <Search className="mr-2 h-5 w-5" />
-                Generate Report
+                {loading ? 'Analyzing with AI...' : 'Generate Report'}
               </Button>
             </div>
           </CardContent>
@@ -178,9 +198,9 @@ export default function AdverseMediaPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Adverse Media Report</CardTitle>
+                  <CardTitle>AI-Generated Adverse Media Report</CardTitle>
                   <CardDescription>
-                    Results for "{entityName}" in the last {dateRange} days
+                    Results for "{entityName}" in the last {dateRange} days • Powered by DeepSeek AI
                   </CardDescription>
                 </div>
                 {results.length > 0 && (
@@ -257,15 +277,9 @@ export default function AdverseMediaPage() {
                               </div>
                             </div>
                           </div>
-                          <a
-                            href={result.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-300 h-9 px-3 text-sm border-2 border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 hover:-translate-y-0.5 active:bg-neutral-100 shadow-sm hover:shadow-md"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            View Source
-                          </a>
+                          <Badge variant="outline">
+                            AI Finding
+                          </Badge>
                         </div>
                       </div>
                     ))}

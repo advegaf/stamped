@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Loader2, FileText, CheckCircle, XCircle, Clock, AlertTriangle, Search, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { BackButton } from '@/components/layout/back-button'
 
 type DocumentFilterStatus = DocumentStatus | 'ALL'
 
@@ -67,7 +68,7 @@ export default function ComplianceDocumentsPage() {
       filtered = filtered.filter(
         (doc) =>
           doc.fileName.toLowerCase().includes(query) ||
-          doc.documentType.toLowerCase().includes(query) ||
+          doc.type.toLowerCase().includes(query) ||
           doc.clientId.toLowerCase().includes(query)
       )
     }
@@ -76,26 +77,26 @@ export default function ComplianceDocumentsPage() {
   }, [documents, filterStatus, searchQuery])
 
   const handleApprove = async (documentId: string, notes?: string) => {
-    await mockDataService.updateDocumentStatus(documentId, 'APPROVED', notes)
+    await mockDataService.updateDocumentStatus(documentId, 'approved', notes)
     
     // Update local state
     setDocuments((prev) =>
       prev.map((doc) =>
         doc.id === documentId
-          ? { ...doc, status: 'APPROVED', reviewNotes: notes, reviewDate: new Date().toISOString() }
+          ? { ...doc, status: 'approved', reviewNotes: notes, reviewDate: new Date().toISOString() }
           : doc
       )
     )
   }
 
   const handleReject = async (documentId: string, reason: string) => {
-    await mockDataService.updateDocumentStatus(documentId, 'REJECTED', reason)
+    await mockDataService.updateDocumentStatus(documentId, 'rejected', reason)
     
     // Update local state
     setDocuments((prev) =>
       prev.map((doc) =>
         doc.id === documentId
-          ? { ...doc, status: 'REJECTED', reviewNotes: reason, reviewDate: new Date().toISOString() }
+          ? { ...doc, status: 'rejected', reviewNotes: reason, reviewDate: new Date().toISOString() }
           : doc
       )
     )
@@ -107,9 +108,9 @@ export default function ComplianceDocumentsPage() {
 
   // Calculate stats
   const stats = {
-    pending: documents.filter((doc) => doc.status === 'UPLOADED' || doc.status === 'PENDING' || doc.status === 'REVIEWING').length,
-    approved: documents.filter((doc) => doc.status === 'APPROVED').length,
-    rejected: documents.filter((doc) => doc.status === 'REJECTED').length,
+    pending: documents.filter((doc) => doc.status === 'uploaded' || doc.status === 'pending_upload' || doc.status === 'under_review').length,
+    approved: documents.filter((doc) => doc.status === 'approved').length,
+    rejected: documents.filter((doc) => doc.status === 'rejected').length,
     total: documents.length,
   }
 
@@ -132,6 +133,8 @@ export default function ComplianceDocumentsPage() {
       )}
 
       <div className="space-y-6">
+        <BackButton href="/compliance" label="Back to Compliance" />
+        
         {/* Header */}
       <div>
         <h1 className="font-sans text-4xl font-bold text-neutral-900">Document Review</h1>
@@ -243,20 +246,18 @@ export default function ComplianceDocumentsPage() {
             </div>
 
             {/* Status Filter */}
-            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as DocumentFilterStatus)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="UPLOADED">Uploaded</SelectItem>
-                <SelectItem value="REVIEWING">Reviewing</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
-                <SelectItem value="MISSING">Missing</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as DocumentFilterStatus)}
+              options={[
+                { value: 'ALL', label: 'All Statuses' },
+                { value: 'pending_upload', label: 'Pending Upload' },
+                { value: 'uploaded', label: 'Uploaded' },
+                { value: 'under_review', label: 'Under Review' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'rejected', label: 'Rejected' },
+              ]}
+            />
           </div>
         </CardContent>
       </Card>

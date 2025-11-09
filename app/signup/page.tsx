@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
-import { Eye, EyeOff } from 'lucide-react'
+import { Select } from '@/components/ui/select'
+import { Eye, EyeOff, Briefcase, Users } from 'lucide-react'
 import { authService } from '@/lib/auth/service'
 import { validateSignUpForm } from '@/lib/auth/validation'
 
@@ -21,6 +22,9 @@ export default function SignUpPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    userType: 'employee' as 'client' | 'employee',
+    role: 'compliance_officer' as 'relationship_manager' | 'compliance_officer' | 'risk_analyst' | 'executive',
+    companyName: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -49,6 +53,9 @@ export default function SignUpPage() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
+        userType: formData.userType,
+        role: formData.userType === 'employee' ? formData.role : undefined,
+        companyName: formData.userType === 'client' ? formData.companyName : undefined,
       })
 
       if (!result.success) {
@@ -97,6 +104,49 @@ export default function SignUpPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* User Type Selection */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-neutral-700">
+                Account Type <span className="text-error-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, userType: 'employee' })}
+                  className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                    formData.userType === 'employee'
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-neutral-300 bg-white hover:border-neutral-400'
+                  }`}
+                >
+                  <Briefcase className={`h-5 w-5 ${formData.userType === 'employee' ? 'text-primary-600' : 'text-neutral-600'}`} />
+                  <div className="text-left">
+                    <p className={`text-sm font-medium ${formData.userType === 'employee' ? 'text-primary-900' : 'text-neutral-900'}`}>
+                      Employee
+                    </p>
+                    <p className="text-xs text-neutral-600">Internal team member</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, userType: 'client' })}
+                  className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                    formData.userType === 'client'
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-neutral-300 bg-white hover:border-neutral-400'
+                  }`}
+                >
+                  <Users className={`h-5 w-5 ${formData.userType === 'client' ? 'text-primary-600' : 'text-neutral-600'}`} />
+                  <div className="text-left">
+                    <p className={`text-sm font-medium ${formData.userType === 'client' ? 'text-primary-900' : 'text-neutral-900'}`}>
+                      Client
+                    </p>
+                    <p className="text-xs text-neutral-600">External partner</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <Input
               label="Full Name"
               type="text"
@@ -122,6 +172,36 @@ export default function SignUpPage() {
               required
               autoComplete="email"
             />
+
+            {/* Employee Role Selection */}
+            {formData.userType === 'employee' && (
+              <Select
+                label="Role"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                options={[
+                  { value: 'relationship_manager', label: 'Relationship Manager' },
+                  { value: 'compliance_officer', label: 'Compliance Officer' },
+                  { value: 'risk_analyst', label: 'Risk Analyst' },
+                  { value: 'executive', label: 'Executive' },
+                ]}
+                required
+              />
+            )}
+
+            {/* Client Company Name */}
+            {formData.userType === 'client' && (
+              <Input
+                label="Company Name"
+                type="text"
+                placeholder="Acme Corporation"
+                value={formData.companyName}
+                onChange={(e) =>
+                  setFormData({ ...formData, companyName: e.target.value })
+                }
+                required={formData.userType === 'client'}
+              />
+            )}
 
             <div className="relative">
               <Input

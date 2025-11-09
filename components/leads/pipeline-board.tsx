@@ -96,7 +96,7 @@ export default function PipelineBoard({ leads, onStageChange }: PipelineBoardPro
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-6 overflow-x-auto pb-4">
       {stages.map((stage) => {
         const stageLeads = leadsByStage[stage] || []
         const totals = stageTotals[stage]
@@ -104,29 +104,29 @@ export default function PipelineBoard({ leads, onStageChange }: PipelineBoardPro
         return (
           <div
             key={stage}
-            className="flex-shrink-0 w-80"
+            className="flex-shrink-0 w-[320px]"
             onDragOver={(e) => handleDragOver(e, stage)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, stage)}
           >
             {/* Stage Header */}
             <div className={cn(
-              'rounded-t-lg p-4 border-2 transition-colors duration-200',
+              'rounded-t-xl p-4 border-2 transition-colors duration-200 h-[88px] flex flex-col justify-center',
               stageColors[stage],
               dragOverStage === stage && 'ring-2 ring-primary-500 ring-offset-2'
             )}>
-              <h3 className="font-sans font-semibold text-neutral-900 mb-1">
+              <h3 className="font-sans font-semibold text-neutral-900 mb-2 text-base">
                 {getStageDisplayName(stage)}
               </h3>
               <div className="flex items-center justify-between text-sm text-neutral-600">
-                <span>{totals.count} lead{totals.count !== 1 ? 's' : ''}</span>
-                <span className="font-semibold">{formatCurrency(totals.value)}</span>
+                <span className="text-xs">{totals.count} lead{totals.count !== 1 ? 's' : ''}</span>
+                <span className="font-semibold text-xs">{formatCurrency(totals.value)}</span>
               </div>
             </div>
 
             {/* Stage Content */}
             <div className={cn(
-              'min-h-[600px] bg-neutral-50 border-2 border-t-0 rounded-b-lg p-3 space-y-3',
+              'min-h-[600px] bg-neutral-50 border-2 border-t-0 rounded-b-xl p-4 space-y-3',
               stageColors[stage].split(' ')[1] // Use border color
             )}>
               <AnimatePresence>
@@ -146,33 +146,33 @@ export default function PipelineBoard({ leads, onStageChange }: PipelineBoardPro
                     )}
                   >
                     <Link href={`/leads/${lead.id}`} className="block">
-                      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
+                      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 min-h-[200px]">
+                        <CardContent className="p-4 h-full flex flex-col">
+                          <div className="space-y-3 flex-1">
                             {/* Company Name & AI Score */}
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Building2 className="h-4 w-4 text-primary-600 flex-shrink-0" />
-                                  <h4 className="font-sans font-semibold text-neutral-900 text-sm leading-tight">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start gap-2 mb-1">
+                                  <Building2 className="h-4 w-4 text-primary-600 flex-shrink-0 mt-0.5" />
+                                  <h4 className="font-sans font-semibold text-neutral-900 text-sm leading-tight break-words">
                                     {lead.companyName}
                                   </h4>
                                 </div>
-                                <p className="text-xs text-neutral-600">{lead.industry}</p>
+                                <p className="text-xs text-neutral-600 truncate pl-6">{lead.industry}</p>
                               </div>
                               <AIScoreBadge score={lead.aiScore} breakdown={lead.aiScoreBreakdown} size="sm" />
                             </div>
 
                             {/* Contact */}
-                            <div className="flex items-center gap-2 text-xs text-neutral-700">
-                              <User className="h-3 w-3 text-neutral-500" />
+                            <div className="flex items-center gap-2 text-xs text-neutral-700 pl-6">
+                              <User className="h-3 w-3 text-neutral-500 flex-shrink-0" />
                               <span className="truncate">{lead.contactName}</span>
                             </div>
 
                             {/* Revenue */}
                             {lead.estimatedRevenue && (
-                              <div className="flex items-center gap-2 text-xs">
-                                <DollarSign className="h-3 w-3 text-green-600" />
+                              <div className="flex items-center gap-2 text-xs pl-6">
+                                <DollarSign className="h-3 w-3 text-green-600 flex-shrink-0" />
                                 <span className="font-semibold text-neutral-900">
                                   {formatCurrency(lead.estimatedRevenue)}
                                 </span>
@@ -181,8 +181,8 @@ export default function PipelineBoard({ leads, onStageChange }: PipelineBoardPro
 
                             {/* Expected Close Date */}
                             {lead.expectedCloseDate && (
-                              <div className="flex items-center gap-2 text-xs text-neutral-600">
-                                <Calendar className="h-3 w-3 text-neutral-500" />
+                              <div className="flex items-center gap-2 text-xs text-neutral-600 pl-6">
+                                <Calendar className="h-3 w-3 text-neutral-500 flex-shrink-0" />
                                 <span>
                                   {new Date(lead.expectedCloseDate).toLocaleDateString('en-US', {
                                     month: 'short',
@@ -191,13 +191,13 @@ export default function PipelineBoard({ leads, onStageChange }: PipelineBoardPro
                                 </span>
                               </div>
                             )}
+                          </div>
 
-                            {/* Assigned To */}
-                            <div className="pt-2 border-t border-neutral-200 flex items-center justify-between">
-                              <Badge variant="outline" className="text-xs">
-                                {lead.assignedToName}
-                              </Badge>
-                            </div>
+                          {/* Assigned To - Always at bottom */}
+                          <div className="pt-3 mt-auto border-t border-neutral-200">
+                            <Badge variant="outline" className="text-xs w-full justify-center">
+                              {lead.assignedToName}
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -207,7 +207,7 @@ export default function PipelineBoard({ leads, onStageChange }: PipelineBoardPro
               </AnimatePresence>
 
               {stageLeads.length === 0 && (
-                <div className="flex items-center justify-center h-32 text-neutral-400 text-sm">
+                <div className="flex items-center justify-center h-32 text-neutral-400 text-sm rounded-lg border-2 border-dashed border-neutral-300">
                   Drop leads here
                 </div>
               )}

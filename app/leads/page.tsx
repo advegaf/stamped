@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { mockLeads } from '@/lib/mock-data/leads'
+import React, { useState, useMemo, useEffect } from 'react'
+import { mockDataService } from '@/lib/services/mock-data-service'
 import { Lead, Industry, PipelineStage } from '@/lib/types/lead'
 import LeadCard from '@/components/leads/lead-card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Search, Plus, Filter, TrendingUp, Users, DollarSign, Target } from 'lucide-react'
+import { Search, Plus, Filter, TrendingUp, Users, DollarSign, Target, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -44,15 +44,32 @@ export default function LeadsPage() {
   const [selectedStage, setSelectedStage] = useState<PipelineStage | 'All'>('All')
   const [minAIScore, setMinAIScore] = useState<number>(0)
   const [sortBy, setSortBy] = useState<'score' | 'revenue' | 'date'>('score')
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch leads on mount
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const fetchedLeads = await mockDataService.getLeads()
+        setLeads(fetchedLeads)
+      } catch (error) {
+        console.error('Failed to fetch leads:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLeads()
+  }, [])
 
   // Filter and sort leads
   const filteredLeads = useMemo(() => {
-    let leads = [...mockLeads]
+    let leadsToFilter = [...leads]
 
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      leads = leads.filter(
+      leadsToFilter = leadsToFilter.filter(
         (lead) =>
           lead.companyName.toLowerCase().includes(query) ||
           lead.contactName.toLowerCase().includes(query) ||
@@ -63,21 +80,21 @@ export default function LeadsPage() {
 
     // Industry filter
     if (selectedIndustry !== 'All') {
-      leads = leads.filter((lead) => lead.industry === selectedIndustry)
+      leadsToFilter = leadsToFilter.filter((lead) => lead.industry === selectedIndustry)
     }
 
     // Stage filter
     if (selectedStage !== 'All') {
-      leads = leads.filter((lead) => lead.pipelineStage === selectedStage)
+      leadsToFilter = leadsToFilter.filter((lead) => lead.pipelineStage === selectedStage)
     }
 
     // AI Score filter
     if (minAIScore > 0) {
-      leads = leads.filter((lead) => lead.aiScore >= minAIScore)
+      leadsToFilter = leadsToFilter.filter((lead) => lead.aiScore >= minAIScore)
     }
 
     // Sort
-    leads.sort((a, b) => {
+    leadsToFilter.sort((a, b) => {
       switch (sortBy) {
         case 'score':
           return b.aiScore - a.aiScore
@@ -90,8 +107,8 @@ export default function LeadsPage() {
       }
     })
 
-    return leads
-  }, [searchQuery, selectedIndustry, selectedStage, minAIScore, sortBy])
+    return leadsToFilter
+  }, [leads, searchQuery, selectedIndustry, selectedStage, minAIScore, sortBy])
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -117,6 +134,14 @@ export default function LeadsPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      </div>
+    )
   }
 
   return (

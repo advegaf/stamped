@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
+import { BackButton } from '@/components/layout/back-button'
 
 export default function RiskAnalysisDetailPage() {
   const params = useParams()
@@ -100,10 +101,7 @@ export default function RiskAnalysisDetailPage() {
   return (
     <div className="space-y-6">
       {/* Back Button */}
-      <Button variant="ghost" onClick={() => router.back()}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Risk Assessment
-      </Button>
+      <BackButton href="/compliance/risk-assessment" label="Back to Risk Assessment" />
 
       {/* Entity Header */}
       <div className="flex items-start justify-between">

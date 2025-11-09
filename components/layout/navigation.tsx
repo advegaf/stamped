@@ -68,10 +68,10 @@ export function Navigation({ userRole = 'compliance', userName: userNameProp }: 
   )
 
   return (
-    <nav className="flex h-screen w-64 flex-col border-r border-neutral-200/50 bg-white/80 backdrop-blur-xl">
+    <nav className="flex h-screen w-64 flex-col border-r border-neutral-200/50 bg-white/70 backdrop-blur-xl">
         {/* logo at top */}
         <div className="flex h-16 items-center border-b border-neutral-200/50 px-6">
-          <Link href="/dashboard" className="relative h-12 w-auto">
+          <Link href="/dashboard" className="relative h-12 w-auto transition-transform duration-200 hover:scale-105">
             <Image
               src="/logo.png"
               alt="Stamped"
@@ -85,8 +85,8 @@ export function Navigation({ userRole = 'compliance', userName: userNameProp }: 
 
       {/* nav menu items */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-1">
-          {visibleItems.map((item) => {
+        <div className="space-y-1.5">
+          {visibleItems.map((item, index) => {
             const Icon = item.icon
             const isActive = pathname === item.href
 
@@ -95,13 +95,17 @@ export function Navigation({ userRole = 'compliance', userName: userNameProp }: 
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300',
                   isActive
-                    ? 'bg-primary-50 text-primary-700 shadow-sm'
-                    : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 hover:translate-x-1'
+                    ? 'bg-gradient-to-r from-primary-50 to-turquoise-50/50 text-primary-700 shadow-md border border-primary-100'
+                    : 'text-neutral-700 hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100/50 hover:text-neutral-900 hover:translate-x-1 hover:shadow-sm'
                 )}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className={cn(
+                  "h-5 w-5 transition-all duration-300",
+                  isActive ? "text-primary-600" : "text-neutral-500 group-hover:text-primary-600 group-hover:scale-110"
+                )} />
                 {item.label}
               </Link>
             )
@@ -111,21 +115,21 @@ export function Navigation({ userRole = 'compliance', userName: userNameProp }: 
 
       {/* user info at bottom */}
       <div className="border-t border-neutral-200/50 p-4">
-        <div className="mb-3 rounded-lg bg-gradient-to-br from-neutral-50 to-neutral-100/50 p-3 shadow-sm">
+        <div className="mb-3 rounded-xl bg-gradient-to-br from-white/80 to-neutral-50/80 backdrop-blur-sm p-3 shadow-sm border border-neutral-200/50 transition-all duration-300 hover:shadow-md">
           <div className="flex items-center gap-3">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={userName}
-                className="h-10 w-10 rounded-full object-cover border-2 border-neutral-200"
+                className="h-10 w-10 rounded-full object-cover border-2 border-primary-200 ring-2 ring-primary-100"
               />
             ) : (
-              <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-100 to-turquoise-100 flex items-center justify-center shadow-sm">
                 <UserIcon className="h-5 w-5 text-primary-600" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-neutral-900 truncate">{userName}</p>
+              <p className="text-sm font-semibold text-neutral-900 truncate">{userName}</p>
               <p className="text-xs text-neutral-600 capitalize">{userRole} Officer</p>
             </div>
           </div>
@@ -134,9 +138,9 @@ export function Navigation({ userRole = 'compliance', userName: userNameProp }: 
         <div className="space-y-1">
           <Link
             href="/settings"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 transition-all duration-200 hover:bg-neutral-100 hover:translate-x-1"
+            className="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-neutral-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100/50 hover:translate-x-1 hover:shadow-sm"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-5 w-5 text-neutral-500 transition-all group-hover:text-primary-600 group-hover:rotate-90" />
             Settings
           </Link>
           <button
@@ -145,9 +149,9 @@ export function Navigation({ userRole = 'compliance', userName: userNameProp }: 
               await authService.signOut()
               window.location.href = '/login'
             }}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 transition-all duration-200 hover:bg-neutral-100 hover:translate-x-1"
+            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-neutral-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100/50 hover:translate-x-1 hover:shadow-sm hover:text-red-700"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-5 w-5 text-neutral-500 transition-all group-hover:text-red-600 group-hover:-translate-x-0.5" />
             Sign out
           </button>
         </div>

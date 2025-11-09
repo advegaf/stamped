@@ -100,7 +100,7 @@ class AIChatbotService {
       lowerMessage.includes('appreciate')
     ) {
       response = "You're welcome! Is there anything else I can help you with?"
-      quickReplies = ['Check my status', 'Upload documents', 'No, I'm good']
+      quickReplies = ['Check my status', 'Upload documents', 'No, I\'m good']
     }
     // Default response
     else {
